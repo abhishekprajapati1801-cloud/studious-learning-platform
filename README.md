@@ -6,7 +6,7 @@
 
 - Account registration and sign-in with scrypt password hashing
 - Signed, HTTP-only session cookies and protected dashboard/quiz routes
-- SQLite-backed accounts and sessions, with persistent storage support on Render
+- SQLite-backed accounts and sessions (Render's free filesystem is temporary)
 - Timed quizzes and a personalized progress dashboard
 - Contact form API with optional email delivery
 - Existing visual design preserved
@@ -35,11 +35,11 @@ npm run build
 
 ## Deploy to Render
 
-The included `render.yaml` configures the frontend and API as one web service and mounts a persistent disk for the SQLite database. Render's configured Starter service and disk are paid resources; check current pricing in your Render account before applying the blueprint.
+The included `render.yaml` configures the frontend and API as one free web service. Free Render services use temporary storage, so the SQLite database and accounts may reset when the service restarts or redeploys. For durable accounts, move the database to a managed database or add persistent storage on a paid plan.
 
 1. Push this repository to GitHub.
 2. In Render, select **New → Blueprint** and connect the repository.
-3. Review the service and disk costs, then apply the blueprint. Render generates `SESSION_SECRET` and provides the public HTTPS URL.
+3. Apply the free blueprint. Render generates `SESSION_SECRET` and provides the public HTTPS URL.
 4. To enable contact email, configure `EMAIL_USER`, `EMAIL_PASS` (a Gmail app password), and `CONTACT_TO` in the service environment settings.
 
 ## API
@@ -54,4 +54,4 @@ The included `render.yaml` configures the frontend and API as one web service an
 
 ## Configuration
 
-See [.env.example](.env.example). In production, set a unique `SESSION_SECRET` and a persistent `DATA_DIR`. Never commit `.env` files, credentials, or database files.
+See [.env.example](.env.example). In production, set a unique `SESSION_SECRET`; `DATA_DIR` defaults to a local `data` folder. Never commit `.env` files, credentials, or database files.
