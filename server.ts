@@ -116,15 +116,20 @@ async function startServer() {
     return res.json({ success: true });
   });
 
-  app.post("/api/contact", async (req, res) => {
+  app.post("/api/contact", limitAuthAttempts, async (req, res) => {
     const { firstName, lastName, email, message } = req.body || {};
-    if (![firstName, lastName, email, message].every((value) => typeof value === "string") || !email.includes("@") || message.trim().length < 5) return res.status(400).json({ success: false, message: "Please complete all fields with a valid email and message." });
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return res.status(503).json({ success: false, message: "Contact email is not configured yet. Please try again later." });
+    if (![firstName, lastName, email, message].every((value) => typeof value === "string")) return res.status(400).json({ success: false, message: "Please complete all fields with a valid email and message." });
+    const cleanFirstName = firstName.trim();
+    const cleanLastName = lastName.trim();
+    const cleanEmail = email.trim();
+    const cleanMessage = message.trim();
+    if (!cleanFirstName || cleanFirstName.length > 80 || !cleanLastName || cleanLastName.length > 80 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail) || cleanMessage.length < 5 || cleanMessage.length > 5000) return res.status(400).json({ success: false, message: "Please check your name, email, and message (5 to 5,000 characters)." });
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return res.status(503).json({ success: false, message: "Email delivery is not configured yet. Please contact us directly using the email or phone number shown here." });
     try {
-      const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } });
-      await transporter.sendMail({ from: process.env.EMAIL_USER, to: process.env.CONTACT_TO || process.env.EMAIL_USER, subject: `New Studious Query from ${firstName} ${lastName}`, text: `Name: ${firstName} ${lastName}\nEmail: ${email}\n\nMessage:\n${message}`, replyTo: email });
+      const transporter = nodemailer.createTransport({ service: "gmail", connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 20000, auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } });
+      await transporter.sendMail({ from: process.env.EMAIL_USER, to: process.env.CONTACT_TO || process.env.EMAIL_USER, subject: `New Studious Query from ${cleanFirstName} ${cleanLastName}`, text: `Name: ${cleanFirstName} ${cleanLastName}\nEmail: ${cleanEmail}\n\nMessage:\n${cleanMessage}`, replyTo: cleanEmail });
       return res.json({ success: true, message: "Message sent successfully!" });
-    } catch (error) { console.error("Contact email error:", error); return res.status(500).json({ success: false, message: "Failed to send message. Please try again later." }); }
+    } catch (error) { console.error("Contact email delivery failed:", error instanceof Error ? error.message : "Unknown error"); return res.status(502).json({ success: false, message: "We could not deliver your message by email. Please contact us directly using the email or phone number shown here." }); }
   });
 
   if (process.env.NODE_ENV !== "production") {
@@ -139,3 +144,4 @@ async function startServer() {
   app.listen(port, "0.0.0.0", () => console.log(`Studious server listening on port ${port}`));
 }
 startServer();
+
