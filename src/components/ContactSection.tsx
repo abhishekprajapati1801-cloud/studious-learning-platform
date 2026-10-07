@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle2, Loader2 } from 'lucide-react';
 
-const CONTACT_PHONE = '+91 7030403060';
-const CONTACT_PHONE_LINK = '+917030403060';
-const CONTACT_EMAIL = 'okkshrutii@gmail.com';
+const CONTACT_PHONE = '+91 8369135933';
+const CONTACT_PHONE_LINK = '+918369135933';
+const CONTACT_EMAIL = 'abhishekprajapati1801@gmail.com';
 
 export default function ContactSection() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -97,7 +97,7 @@ export default function ContactSection() {
                   <CheckCircle2 className="w-10 h-10" />
                 </div>
                 <h3 className="text-2xl font-bold text-slate-800 mb-2">Message Sent!</h3>
-                <p className="text-slate-600">Thank you for reaching out. Shruti will get back to you soon.</p>
+                <p className="text-slate-600">Thank you for reaching out. We will reply to the email address you provided.</p>
                 <button
                   onClick={() => setStatus('idle')}
                   className="mt-8 text-brand font-bold hover:underline"
