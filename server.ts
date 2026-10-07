@@ -5,7 +5,6 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 import { promisify } from "node:util";
 import Database from "better-sqlite3";
-import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -124,10 +123,25 @@ async function startServer() {
     const cleanEmail = email.trim();
     const cleanMessage = message.trim();
     if (!cleanFirstName || cleanFirstName.length > 80 || !cleanLastName || cleanLastName.length > 80 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail) || cleanMessage.length < 5 || cleanMessage.length > 5000) return res.status(400).json({ success: false, message: "Please check your name, email, and message (5 to 5,000 characters)." });
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return res.status(503).json({ success: false, message: "Email delivery is not configured yet. Please contact us directly using the email or phone number shown here." });
+    if (!process.env.RESEND_API_KEY) return res.status(503).json({ success: false, message: "Contact email is not configured yet. Please email us directly using the address shown here." });
     try {
-      const transporter = nodemailer.createTransport({ service: "gmail", connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 20000, auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } });
-      await transporter.sendMail({ from: process.env.EMAIL_USER, to: process.env.CONTACT_TO || process.env.EMAIL_USER, subject: `New Studious Query from ${cleanFirstName} ${cleanLastName}`, text: `Name: ${cleanFirstName} ${cleanLastName}\nEmail: ${cleanEmail}\n\nMessage:\n${cleanMessage}`, replyTo: cleanEmail });
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: process.env.EMAIL_FROM || "Studious <onboarding@resend.dev>",
+          to: [process.env.CONTACT_TO || "abhishekprajapati1801@gmail.com"],
+          reply_to: cleanEmail,
+          subject: `New Studious Query from ${cleanFirstName} ${cleanLastName}`,
+          text: `Name: ${cleanFirstName} ${cleanLastName}\nEmail: ${cleanEmail}\n\nMessage:\n${cleanMessage}`,
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!response.ok) {
+        const providerError = await response.json().catch(() => ({})) as { message?: string; name?: string };
+        console.error("Contact email provider rejected request:", providerError.name || response.status, providerError.message || "Request failed");
+        return res.status(502).json({ success: false, message: "We could not deliver your message by email. Please contact us directly using the email or phone number shown here." });
+      }
       return res.json({ success: true, message: "Message sent successfully!" });
     } catch (error) { console.error("Contact email delivery failed:", error instanceof Error ? error.message : "Unknown error"); return res.status(502).json({ success: false, message: "We could not deliver your message by email. Please contact us directly using the email or phone number shown here." }); }
   });
