@@ -55,4 +55,3 @@ The included `render.yaml` configures the frontend and API as one web service an
 ## Configuration
 
 See [.env.example](.env.example). In production, set a unique `SESSION_SECRET` and a persistent `DATA_DIR`. Never commit `.env` files, credentials, or database files.
-
