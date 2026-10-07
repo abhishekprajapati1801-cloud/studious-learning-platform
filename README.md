@@ -35,12 +35,12 @@ npm run build
 
 ## Deploy to Render
 
-The included `render.yaml` configures the frontend and API as one free web service. Free Render services use temporary storage, so the SQLite database and accounts may reset when the service restarts or redeploys. For durable accounts, move the database to a managed database or add persistent storage on a paid plan.
+The included `render.yaml` configures the frontend and API as one free web service. Free Render services use temporary storage, so the SQLite database and accounts may be reset when the service restarts or redeploys. For durable accounts, move the database to a managed database or add persistent storage on a paid plan.
 
 1. Push this repository to GitHub.
 2. In Render, select **New → Blueprint** and connect the repository.
 3. Apply the free blueprint. Render generates `SESSION_SECRET` and provides the public HTTPS URL.
-4. To enable contact email, configure `EMAIL_USER`, `EMAIL_PASS` (a Gmail app password), and `CONTACT_TO` in the service environment settings.
+4. To enable contact email on Render Free, create a Resend API key and add `RESEND_API_KEY` to the service environment settings. Set `CONTACT_TO` to your inbox. The API uses HTTPS because Render Free blocks SMTP ports. Resend's onboarding sender is suitable for initial testing; verify your sending domain with Resend and set `EMAIL_FROM` before accepting messages from general customers.
 
 ## API
 
@@ -55,3 +55,4 @@ The included `render.yaml` configures the frontend and API as one free web servi
 ## Configuration
 
 See [.env.example](.env.example). In production, set a unique `SESSION_SECRET`; `DATA_DIR` defaults to a local `data` folder. Never commit `.env` files, credentials, or database files.
+
