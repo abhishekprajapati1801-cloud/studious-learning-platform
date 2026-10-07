@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle2, Loader2 } from 'lucide-react';
 
+const CONTACT_PHONE = '+91 7030403060';
+const CONTACT_PHONE_LINK = '+917030403060';
+const CONTACT_EMAIL = 'okkshrutii@gmail.com';
+
 export default function ContactSection() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -13,6 +18,7 @@ export default function ContactSection() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
+    setErrorMessage('');
 
     try {
       const response = await fetch('/api/contact', {
@@ -21,15 +27,18 @@ export default function ContactSection() {
         body: JSON.stringify(formData)
       });
 
-      if (response.ok) {
+      const result = await response.json().catch(() => null);
+      if (response.ok && result?.success) {
         setStatus('success');
         setFormData({ firstName: '', lastName: '', email: '', message: '' });
         setTimeout(() => setStatus('idle'), 5000);
       } else {
+        setErrorMessage(result?.message || 'We could not send your message right now.');
         setStatus('error');
       }
     } catch (error) {
       console.error("Contact error:", error);
+      setErrorMessage('The contact service is temporarily unavailable.');
       setStatus('error');
     }
   };
@@ -51,7 +60,9 @@ export default function ContactSection() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 font-medium">Call Us</p>
-                  <p className="text-lg text-slate-800 font-bold">+91 7030403060</p>
+                  <a href={`tel:${CONTACT_PHONE_LINK}`} className="text-lg text-slate-800 font-bold hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" aria-label={`Call ${CONTACT_PHONE}`}>
+                    {CONTACT_PHONE}
+                  </a>
                 </div>
               </div>
 
@@ -61,7 +72,9 @@ export default function ContactSection() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 font-medium">Email Us</p>
-                  <p className="text-lg text-slate-800 font-bold">okkshrutii@gmail.com</p>
+                  <a href={`mailto:${CONTACT_EMAIL}`} className="text-lg text-slate-800 font-bold hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+                    {CONTACT_EMAIL}
+                  </a>
                 </div>
               </div>
 
@@ -142,7 +155,12 @@ export default function ContactSection() {
                 </div>
 
                 {status === 'error' && (
-                  <p className="text-sm text-rose-500 font-medium">Something went wrong. Please try again.</p>
+                  <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+                    <p className="font-semibold">{errorMessage}</p>
+                    <p className="mt-1">
+                      Please contact us directly by <a className="font-bold underline" href={`mailto:${CONTACT_EMAIL}`}>email</a> or <a className="font-bold underline" href={`tel:${CONTACT_PHONE_LINK}`}>phone</a>.
+                    </p>
+                  </div>
                 )}
 
                 <button
@@ -164,3 +182,4 @@ export default function ContactSection() {
     </section>
   );
 }
+
